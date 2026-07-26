@@ -58,3 +58,37 @@ def test_delete_character():
     
     get_response = client.get("/characters/")
     assert len(get_response.json()) == 0
+
+def test_read_single_character():
+    create_response = client.post("/characters/", json={"name": "Rui", "age": 17})
+    char_id = create_response.json()["id"]
+    
+    response = client.get(f"/characters/{char_id}")
+    assert response.status_code == 200
+    assert response.json()["name"] == "Rui"
+
+def test_errors_for_missing_characters():
+    get_response = client.get("/characters/999")
+    assert get_response.status_code == 404
+    assert get_response.json()["detail"] == "Character not found"
+
+    delete_response = client.delete("/characters/999")
+    assert delete_response.status_code == 404
+
+def test_update_character():
+    create_response = client.post("/characters/", json={"name": "Emu", "age": 15})
+    char_id = create_response.json()["id"]
+
+    update_response = client.put(
+        f"/characters/{char_id}", 
+        json={"name": "Emu Otori", "age": 16}
+    )
+    assert update_response.status_code == 200
+    assert update_response.json()["name"] == "Emu Otori"
+
+def test_update_nonexistent_character():
+    response = client.put(
+        "/characters/999", 
+        json={"name": "Fake", "age": 10}
+    )
+    assert response.status_code == 404
