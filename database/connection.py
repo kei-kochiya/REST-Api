@@ -1,23 +1,20 @@
-import sqlite3
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from database.models import Base
 
-def get_db():
-    conn = sqlite3.connect("proseka.db", check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    try:
-        yield conn
-    finally:
-        conn.close()
+SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./proseka.db"
 
-def init_db():
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS characters (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            age INTEGER NOT NULL
-        )
-    """)
-    conn.commit()
-    conn.close()
-    
+engine = create_async_engine(
+    SQLALCHEMY_DATABASE_URL,
+    connect_args = {"check_same_thread": False}
+)
+
+SessionLocal = async_sessionmaker(
+    autocommit = False,
+    autoflush = False,
+    bind = engine,
+    class_ = AsyncSession
+)
+
+async def get_db():
+    async with SessionLocal() as db:
+        yield db

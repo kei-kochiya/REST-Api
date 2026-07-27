@@ -1,12 +1,10 @@
 from fastapi import FastAPI
-from database.connection import init_db
 from routers import character
 
 from contextlib import asynccontextmanager
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    init_db()
     yield
 
 app = FastAPI(lifespan=lifespan)
