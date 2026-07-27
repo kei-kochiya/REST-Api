@@ -3,7 +3,7 @@ import sqlite3
 import os
 from fastapi.testclient import TestClient
 from main import app
-import main
+from database.connection import get_db
 
 client = TestClient(app)
 
@@ -12,12 +12,15 @@ def setup_database():
     def get_test_db():
         conn = sqlite3.connect("test_proseka.db", check_same_thread=False)
         conn.row_factory = sqlite3.Row
-        return conn
-        
-    main.get_db = get_test_db
+        try:
+            yield conn
+        finally:
+            conn.close()
+            
+    app.dependency_overrides[get_db] = get_test_db
     
-    conn = get_test_db()
-    cursor = conn.cursor()
+    setup_conn = sqlite3.connect("test_proseka.db", check_same_thread=False)
+    cursor = setup_conn.cursor()
     cursor.execute("DROP TABLE IF EXISTS characters")
     cursor.execute("""
         CREATE TABLE characters (
@@ -26,8 +29,8 @@ def setup_database():
             age INTEGER NOT NULL
         )
     """)
-    conn.commit()
-    conn.close()
+    setup_conn.commit()
+    setup_conn.close()
     
     yield
     
